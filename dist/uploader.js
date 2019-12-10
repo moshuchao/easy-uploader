@@ -11,6 +11,7 @@
         onProgress: noop,
         onSuccess: noop,
     };
+    var SESSION_KEY = 'UPLOAD_FILE';
     var Uploader = /** @class */ (function () {
         function Uploader(url, opt) {
             this.progress = [];
@@ -22,12 +23,32 @@
             this.onProgress = _opt.onProgress;
             this.onSuccess = _opt.onSuccess;
         }
+        Uploader.prototype.getLoadedFile = function () {
+            var loaded = sessionStorage.getItem(SESSION_KEY);
+            return loaded ? JSON.parse(loaded) : {};
+        };
+        Uploader.prototype.isLoaded = function (id, index) {
+            return index <= this.getLoadedFile()[id];
+        };
+        Uploader.prototype.setLoadedFile = function (id, index) {
+            var loaded = this.getLoadedFile();
+            loaded[id] = index;
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
+        };
+        Uploader.prototype.removeLoadedFile = function (id) {
+            var loaded = this.getLoadedFile();
+            delete loaded[id];
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
+        };
         Uploader.prototype.submit = function (files) {
             var _this = this;
             var tasks = files.map(function (file, i) {
                 var n = Math.ceil(file.input.size / _this.partSize);
-                return new Array(n).fill(0).map(function (_, j) {
-                    return function () { return new Promise(function (resolve, reject) {
+                return new Array(n).fill(0).reduce(function (acc, _, j) {
+                    if (_this.isLoaded(file.uploadId, j)) {
+                        return acc;
+                    }
+                    var p = function () { return new Promise(function (resolve, reject) {
                         var partFile = file.input.slice(j * _this.partSize, (j + 1) * _this.partSize);
                         var formData = new FormData();
                         formData.append('file', partFile);
@@ -39,8 +60,10 @@
                         xhr.setRequestHeader('X-Chunk-Total', n + '');
                         xhr.onload = function (ev) {
                             if (xhr.status === 200) {
+                                _this.setLoadedFile(file.uploadId, j);
                                 _this.onProgress(_this.progress);
                                 if (j + 1 === n) {
+                                    _this.removeLoadedFile(file.uploadId);
                                     _this.res[i] = xhr.response;
                                 }
                                 return resolve();
@@ -58,7 +81,9 @@
                         };
                         xhr.send(formData);
                     }); };
-                });
+                    acc.push(p);
+                    return acc;
+                }, []);
             });
             var upload = function () {
                 var promises = tasks.shift();

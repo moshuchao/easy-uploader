@@ -23,24 +23,24 @@ if (!fs.existsSync('uploads/')) {
 //     stream.on('close', () => res.end());
 // })
 
-app.post('/upload/init', (req, res, next) => {
-    const files = [];
-    req.body.forEach(file => {
-        const id = crypto.randomBytes(8).toString('hex');
-        const filePath = 'uploads/' + Date.now() + '_' + id + file.name.substring(file.name.lastIndexOf('.'));
-        files.push({
-            id,
-            url: filePath,
-        });
-        fileStorage[id] = {
-            total: file.total,
-            path: filePath,
-            chunks: [],
-        }
-    });
+// app.post('/upload/init', (req, res, next) => {
+//     const files = [];
+//     req.body.forEach(file => {
+//         const id = crypto.randomBytes(8).toString('hex');
+//         const filePath = 'uploads/' + Date.now() + '_' + id + file.name.substring(file.name.lastIndexOf('.'));
+//         files.push({
+//             id,
+//             url: filePath,
+//         });
+//         fileStorage[id] = {
+//             total: file.total,
+//             path: filePath,
+//             chunks: [],
+//         }
+//     });
 
-    res.json(files);
-})
+//     res.json(files);
+// })
 
 
 app.post("/upload", function (req, res, next) {
@@ -60,11 +60,12 @@ app.post("/upload", function (req, res, next) {
     // return res.sendStatus(500)
 
     busboy.on('file', (fieldname, rdStream, filename, encoding, mimetype) => {
+        const partChunks = [];
         rdStream.on('data', data => {
-            chunks.push(data);
+            partChunks.push(data);
         });
         rdStream.on('end', () => {
-
+            chunks[chunkNum - 1] = Buffer.concat(partChunks);
         });
     })
 

@@ -21,6 +21,8 @@ const defaultOpt = {
     onSuccess: noop,
 }
 
+const SESSION_KEY = 'UPLOAD_FILE';
+
 export default class Uploader {
     private url: string;
     private partSize: number;
@@ -39,11 +41,38 @@ export default class Uploader {
         this.onSuccess = _opt.onSuccess;
     }
 
+    getLoadedFile(): {
+        [id: string]: number
+    } {
+        const loaded = sessionStorage.getItem(SESSION_KEY);
+        return loaded ? JSON.parse(loaded) : {}
+    }
+
+    isLoaded(id: string, index: number) {
+        return index <= this.getLoadedFile()[id]
+    }
+
+    setLoadedFile(id: string, index: number): void {
+        const loaded = this.getLoadedFile();
+        loaded[id] = index;
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
+    }
+
+    removeLoadedFile(id: string) {
+        const loaded = this.getLoadedFile();
+        delete loaded[id];
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
+    }
+
     submit(files: IReq[]) {
         const tasks = files.map((file, i) => {
             const n = Math.ceil(file.input.size / this.partSize);
-            return new Array(n).fill(0).map((_, j) => {
-                return () => new Promise<any>((resolve, reject) => {
+            return new Array(n).fill(0).reduce((acc: (() => Promise<any>)[], _, j) => {
+                if (this.isLoaded(file.uploadId, j)) {
+                    return acc;
+                }
+
+                const p = () => new Promise<any>((resolve, reject) => {
                     const partFile = file.input.slice(j * this.partSize, (j + 1) * this.partSize);
                     const formData = new FormData();
                     formData.append('file', partFile);
@@ -55,8 +84,10 @@ export default class Uploader {
                     xhr.setRequestHeader('X-Chunk-Total', n + '');
                     xhr.onload = (ev) => {
                         if (xhr.status === 200) {
+                            this.setLoadedFile(file.uploadId, j);
                             this.onProgress(this.progress);
                             if (j + 1 === n) {
+                                this.removeLoadedFile(file.uploadId);
                                 this.res[i] = xhr.response;
                             }
                             return resolve();
@@ -76,7 +107,10 @@ export default class Uploader {
 
                     xhr.send(formData);
                 })
-            });
+
+                acc.push(p);
+                return acc;
+            }, []);
         });
 
         const upload = () => {
