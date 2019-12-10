@@ -6,14 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>uploader</title>
+    <link rel="stylesheet" href="/css/example.css">
 </head>
 
 <body>
     <div>
-        <label>
-            <input type="file" name="" id="file" multiple>
-        </label>
+        <h2>1、upload multiple images</h2>
+        <ul id="images-container">
+            <li class="uploader-file" id="uploader">
+                <label class="uploader">
+                    <div class="uploader-file_title">pick image</div>
+                    <input type="file" accept="image/*" multiple class="file-input"
+                        onchange="onSelectImageChange(this.files)" />
+                </label>
+            </li>
+        </ul>
+        <p>
+            <button class="btn-upload" onclick="submitImages()">ok, i want to submit</button>
+        </p>
     </div>
+    <template id="image-tpl">
+        <li class="uploader-file" id="{id}">
+            <img src="{src}" alt="{alt}" onload="revokeObjectURL(this.src)">
+            <i class="uploader-file_size">{size}</i>
+            <div class="uploader-file_progress">
+                <div style="position: relative;">
+                    <div class="uploader-file_progress_text"></div>
+                    <div class="uploader-file_progress_inner"></div>
+                </div>
+            </div>
+            <div class="uploader-file_action">
+                <button>abort&delete</button>
+            </div>
+        </li>
+    </template>
 
     <!-- https://github.com/emn178/js-md5 -->
     <script src="/js/md5.min.js"></script>
