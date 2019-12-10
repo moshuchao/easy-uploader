@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const app = express();
 
 app.use('/dist', express.static('dist'));
-app.use(express.static('examples'));
+app.use('/js', express.static('js'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -17,11 +17,11 @@ if (!fs.existsSync('uploads/')) {
     fs.mkdirSync('uploads')
 }
 
-// app.get('/', (req, res) => {
-//     const stream = fs.createReadStream('examples/index.html');
-//     stream.on('open', () => stream.pipe(res));
-//     stream.on('close', () => res.end());
-// })
+app.get('/', (req, res) => {
+    const stream = fs.createReadStream('index.html');
+    stream.on('open', () => stream.pipe(res));
+    stream.on('close', () => res.end());
+})
 
 // app.post('/upload/init', (req, res, next) => {
 //     const files = [];
