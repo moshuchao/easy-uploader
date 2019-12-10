@@ -6,11 +6,14 @@ import resolve from 'rollup-plugin-node-resolve';
 
 export default {
     input: 'src/uploader.ts',
-    output: {
-        file: 'dist/uploader.js',
+    output: [{
+        file: 'dist/uploader.umd.js',
         format: 'umd',
         name: 'Uploader',
-    },
+    }, {
+        file: 'dist/uploader.cjs.js',
+        format: 'cjs',
+    }],
     plugins: [resolve({
         // 将自定义选项传递给解析插件
         customResolveOptions: {

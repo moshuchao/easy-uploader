@@ -108,7 +108,6 @@
         };
         return Uploader;
     }());
-    //# sourceMappingURL=uploader.js.map
 
     return Uploader;
 
