@@ -10,18 +10,16 @@
         onError: noop,
         onProgress: noop,
         onSuccess: noop,
+        headers: {}
     };
     var SESSION_KEY = 'UPLOAD_FILE';
     var Uploader = /** @class */ (function () {
         function Uploader(url, opt) {
+            if (opt === void 0) { opt = {}; }
             this.progress = [];
             this.res = [];
             this.url = url;
-            var _opt = Object.assign({}, defaultOpt, opt);
-            this.partSize = _opt.partSize;
-            this.onError = _opt.onError;
-            this.onProgress = _opt.onProgress;
-            this.onSuccess = _opt.onSuccess;
+            this.opt = Object.assign({}, defaultOpt, opt);
         }
         Uploader.prototype.getLoadedFile = function () {
             var loaded = sessionStorage.getItem(SESSION_KEY);
@@ -43,13 +41,13 @@
         Uploader.prototype.submit = function (files) {
             var _this = this;
             var tasks = files.map(function (file, i) {
-                var n = Math.ceil(file.input.size / _this.partSize);
+                var n = Math.ceil(file.input.size / _this.opt.partSize);
                 return new Array(n).fill(0).reduce(function (acc, _, j) {
                     if (_this.isLoaded(file.uploadId, j)) {
                         return acc;
                     }
                     var p = function () { return new Promise(function (resolve, reject) {
-                        var partFile = file.input.slice(j * _this.partSize, (j + 1) * _this.partSize);
+                        var partFile = file.input.slice(j * _this.opt.partSize, (j + 1) * _this.opt.partSize);
                         var formData = new FormData();
                         formData.append('file', partFile);
                         var xhr = new XMLHttpRequest();
@@ -61,7 +59,7 @@
                         xhr.onload = function (ev) {
                             if (xhr.status === 200) {
                                 _this.setLoadedFile(file.uploadId, j);
-                                _this.onProgress(_this.progress);
+                                _this.opt.onProgress(_this.progress);
                                 if (j + 1 === n) {
                                     _this.removeLoadedFile(file.uploadId);
                                     _this.res[i] = xhr.response;
@@ -75,7 +73,7 @@
                             if (e.lengthComputable) {
                                 _this.progress[i] = +(e.loaded / e.total / n + j / n).toFixed(2);
                                 if (j + 1 !== n) {
-                                    _this.onProgress(_this.progress);
+                                    _this.opt.onProgress(_this.progress);
                                 }
                             }
                         };
@@ -88,7 +86,7 @@
             var upload = function () {
                 var promises = tasks.shift();
                 if (!promises) {
-                    _this.onSuccess(_this.res);
+                    _this.opt.onSuccess(_this.res);
                     return;
                 }
                 var uploadPart = function () {
@@ -97,7 +95,7 @@
                         return upload();
                     promise()
                         .then(uploadPart) // next part
-                        .catch(_this.onError);
+                        .catch(_this.opt.onError);
                 };
                 uploadPart();
             };
@@ -105,6 +103,7 @@
         };
         return Uploader;
     }());
+    //# sourceMappingURL=uploader.js.map
 
     return Uploader;
 

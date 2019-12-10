@@ -8,7 +8,7 @@ interface IOption {
     onError?: (ev: any) => void;
     onProgress?: (p: number[]) => void;
     onSuccess?: (res: any[]) => void;
-    headers: {
+    headers?: {
         [name: string]: string,
     }
 }
@@ -19,26 +19,27 @@ const defaultOpt = {
     onError: noop,
     onProgress: noop,
     onSuccess: noop,
+    headers: {}
 }
 
 const SESSION_KEY = 'UPLOAD_FILE';
 
+
 export default class Uploader {
     private url: string;
-    private partSize: number;
-    private onError: (err: any) => void;
-    private onProgress: (p: number[]) => void;
-    private onSuccess: (res: any[]) => void;
     private progress: number[] = [];
+    private opt: {
+        partSize: number;
+        onError: (err: any) => void;
+        onProgress: (p: number[]) => void;
+        onSuccess: (res: any[]) => void;
+        headers: { [propName: string]: string }
+    }
     private res: any[] = [];
 
-    constructor(url: string, opt?: IOption) {
+    constructor(url: string, opt: IOption = {}) {
         this.url = url;
-        const _opt = Object.assign({}, defaultOpt, opt);
-        this.partSize = _opt.partSize;
-        this.onError = _opt.onError;
-        this.onProgress = _opt.onProgress;
-        this.onSuccess = _opt.onSuccess;
+        this.opt = Object.assign({}, defaultOpt, opt);
     }
 
     getLoadedFile(): {
@@ -66,14 +67,14 @@ export default class Uploader {
 
     submit(files: IReq[]) {
         const tasks = files.map((file, i) => {
-            const n = Math.ceil(file.input.size / this.partSize);
+            const n = Math.ceil(file.input.size / this.opt.partSize);
             return new Array(n).fill(0).reduce((acc: (() => Promise<any>)[], _, j) => {
                 if (this.isLoaded(file.uploadId, j)) {
                     return acc;
                 }
 
                 const p = () => new Promise<any>((resolve, reject) => {
-                    const partFile = file.input.slice(j * this.partSize, (j + 1) * this.partSize);
+                    const partFile = file.input.slice(j * this.opt.partSize, (j + 1) * this.opt.partSize);
                     const formData = new FormData();
                     formData.append('file', partFile);
                     const xhr = new XMLHttpRequest();
@@ -85,7 +86,7 @@ export default class Uploader {
                     xhr.onload = (ev) => {
                         if (xhr.status === 200) {
                             this.setLoadedFile(file.uploadId, j);
-                            this.onProgress(this.progress);
+                            this.opt.onProgress(this.progress);
                             if (j + 1 === n) {
                                 this.removeLoadedFile(file.uploadId);
                                 this.res[i] = xhr.response;
@@ -100,7 +101,7 @@ export default class Uploader {
                         if (e.lengthComputable) {
                             this.progress[i] = +(e.loaded / e.total / n + j / n).toFixed(2);
                             if (j + 1 !== n) {
-                                this.onProgress(this.progress);
+                                this.opt.onProgress(this.progress);
                             }
                         }
                     };
@@ -116,7 +117,7 @@ export default class Uploader {
         const upload = () => {
             const promises = tasks.shift();
             if (!promises) {
-                this.onSuccess(this.res);
+                this.opt.onSuccess(this.res);
                 return;
             };
 
@@ -125,7 +126,7 @@ export default class Uploader {
                 if (!promise) return upload();
                 promise()
                     .then(uploadPart) // next part
-                    .catch(this.onError);
+                    .catch(this.opt.onError);
             }
 
             uploadPart();
