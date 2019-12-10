@@ -83,6 +83,11 @@ export default class Uploader {
                     xhr.setRequestHeader('X-File-Name', file.input.name);
                     xhr.setRequestHeader('X-Chunk-Num', j + 1 + '');
                     xhr.setRequestHeader('X-Chunk-Total', n + '');
+                    for (const key in this.opt.headers) {
+                        if (this.opt.headers.hasOwnProperty(key)) {
+                            xhr.setRequestHeader(key, this.opt.headers[key]);
+                        }
+                    }
                     xhr.onload = (ev) => {
                         if (xhr.status === 200) {
                             this.setLoadedFile(file.uploadId, j);

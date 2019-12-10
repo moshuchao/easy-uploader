@@ -56,6 +56,11 @@
                         xhr.setRequestHeader('X-File-Name', file.input.name);
                         xhr.setRequestHeader('X-Chunk-Num', j + 1 + '');
                         xhr.setRequestHeader('X-Chunk-Total', n + '');
+                        for (var key in _this.opt.headers) {
+                            if (_this.opt.headers.hasOwnProperty(key)) {
+                                xhr.setRequestHeader(key, _this.opt.headers[key]);
+                            }
+                        }
                         xhr.onload = function (ev) {
                             if (xhr.status === 200) {
                                 _this.setLoadedFile(file.uploadId, j);
