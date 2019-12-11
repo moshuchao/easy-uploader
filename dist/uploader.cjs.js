@@ -14,7 +14,7 @@ var Uploader = /** @class */ (function () {
         if (opt === void 0) { opt = {}; }
         this.progress = {};
         this.res = [];
-        this._xhrs = [];
+        this._xhrs = {};
         this.url = url;
         this.opt = Object.assign({}, defaultOpt, opt);
     }
@@ -35,8 +35,11 @@ var Uploader = /** @class */ (function () {
         delete loaded[id];
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
     };
-    Uploader.prototype.abort = function (index) {
-        this._xhrs[index].forEach(function (xhr) {
+    Uploader.prototype.abort = function (id) {
+        if (!this._xhrs[id]) {
+            return console.warn('Can not abort xhr!');
+        }
+        this._xhrs[id].forEach(function (xhr) {
             if (xhr.readyState > 0 && xhr.readyState < 4) {
                 return xhr.abort();
             }
@@ -44,13 +47,13 @@ var Uploader = /** @class */ (function () {
     };
     Uploader.prototype.submit = function (files) {
         var _this = this;
-        if (this._xhrs.length > 0) {
+        if (Object.keys(this._xhrs).length > 0) {
             return console.warn('Must be waiting upload finished!');
         }
         this.res = [];
         var tasks = files.map(function (file, i) {
             var n = Math.ceil(file.input.size / _this.opt.partSize);
-            _this._xhrs[i] = [];
+            _this._xhrs[file.uploadId] = [];
             return new Array(n).fill(0).reduce(function (acc, _, j) {
                 if (_this.isLoaded(file.uploadId, j)) {
                     return acc;
@@ -93,7 +96,7 @@ var Uploader = /** @class */ (function () {
                         }
                     };
                     xhr.send(formData);
-                    _this._xhrs[i].push(xhr);
+                    _this._xhrs[file.uploadId].push(xhr);
                 }); };
                 acc.push(p);
                 return acc;
@@ -103,7 +106,7 @@ var Uploader = /** @class */ (function () {
             var promises = tasks.shift();
             if (!promises) {
                 _this.opt.onSuccess(_this.res.filter(function (content) { return content; }));
-                _this._xhrs = [];
+                _this._xhrs = {};
                 _this.progress = {};
                 return;
             }

@@ -37,7 +37,7 @@ export default class Uploader {
     }
     private res: any[] = [];
 
-    private _xhrs: XMLHttpRequest[][] = []
+    private _xhrs: { [id: string]: XMLHttpRequest[] } = {}
 
     constructor(url: string, opt: IOption = {}) {
         this.url = url;
@@ -67,8 +67,11 @@ export default class Uploader {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
     }
 
-    abort(index: number) {
-        this._xhrs[index].forEach(xhr => {
+    abort(id: string) {
+        if (!this._xhrs[id]) {
+            return console.warn('Can not abort xhr!');
+        }
+        this._xhrs[id].forEach(xhr => {
             if (xhr.readyState > 0 && xhr.readyState < 4) {
                 return xhr.abort();
             }
@@ -76,14 +79,14 @@ export default class Uploader {
     }
 
     submit(files: IReq[]) {
-        if (this._xhrs.length > 0) {
+        if (Object.keys(this._xhrs).length > 0) {
             return console.warn('Must be waiting upload finished!');
         }
 
         this.res = [];
         const tasks = files.map((file, i) => {
             const n = Math.ceil(file.input.size / this.opt.partSize);
-            this._xhrs[i] = [];
+            this._xhrs[file.uploadId] = [];
             return new Array(n).fill(0).reduce((acc: (() => Promise<any>)[], _, j) => {
                 if (this.isLoaded(file.uploadId, j)) {
                     return acc;
@@ -131,7 +134,7 @@ export default class Uploader {
                     };
 
                     xhr.send(formData);
-                    this._xhrs[i].push(xhr);
+                    this._xhrs[file.uploadId].push(xhr);
                 })
 
                 acc.push(p);
@@ -143,7 +146,7 @@ export default class Uploader {
             const promises = tasks.shift();
             if (!promises) {
                 this.opt.onSuccess(this.res.filter(content => content));
-                this._xhrs = [];
+                this._xhrs = {};
                 this.progress = {};
                 return;
             };
