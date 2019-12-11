@@ -70,7 +70,7 @@ var Uploader = /** @class */ (function () {
                     xhr.setRequestHeader('X-Chunk-Total', n + '');
                     for (var key in _this.opt.headers) {
                         if (_this.opt.headers.hasOwnProperty(key)) {
-                            xhr.setRequestHeader(key, _this.opt.headers[key]);
+                            xhr.setRequestHeader(key, encodeURIComponent(_this.opt.headers[key]));
                         }
                     }
                     xhr.onload = function (ev) {

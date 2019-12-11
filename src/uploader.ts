@@ -104,7 +104,7 @@ export default class Uploader {
                     xhr.setRequestHeader('X-Chunk-Total', n + '');
                     for (const key in this.opt.headers) {
                         if (this.opt.headers.hasOwnProperty(key)) {
-                            xhr.setRequestHeader(key, this.opt.headers[key]);
+                            xhr.setRequestHeader(key, encodeURIComponent(this.opt.headers[key]));
                         }
                     }
                     xhr.onload = (ev) => {
