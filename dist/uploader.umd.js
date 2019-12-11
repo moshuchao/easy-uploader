@@ -10,7 +10,8 @@
         onError: noop,
         onProgress: noop,
         onSuccess: noop,
-        headers: {}
+        headers: {},
+        parallel: 1,
     };
     var SESSION_KEY = 'UPLOAD_FILE';
     var Uploader = /** @class */ (function () {
@@ -123,10 +124,14 @@
             var upload = function () {
                 var promises = tasks.shift();
                 if (!promises) {
-                    _this.opt.onSuccess(_this.res.filter(function (content) { return content; }));
-                    _this._xhrs = {};
-                    _this.progress = {};
-                    _this._abortedFiles = [];
+                    var loadingFileIds = Object.keys(_this._xhrs).filter(function (id) { return _this._abortedFiles.indexOf(id) < 0; });
+                    var finished = loadingFileIds.every(function (id) { return _this._xhrs[id].every(function (xhr) { return xhr.readyState === 4; }); });
+                    if (finished) {
+                        _this.opt.onSuccess(_this.res.filter(function (content) { return content; }));
+                        _this._xhrs = {};
+                        _this.progress = {};
+                        _this._abortedFiles = [];
+                    }
                     return;
                 }
                 var uploadPart = function () {
@@ -144,10 +149,13 @@
                 };
                 uploadPart();
             };
-            upload();
+            for (var i = 0, l = Math.min(this.opt.parallel, files.length); i < l; i++) {
+                upload();
+            }
         };
         return Uploader;
     }());
+    //# sourceMappingURL=uploader.js.map
 
     return Uploader;
 

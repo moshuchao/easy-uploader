@@ -8,6 +8,7 @@ interface IOption {
     onError?: (ev: any) => void;
     onProgress?: (p: { [id: string]: number }) => void;
     onSuccess?: (res: any[]) => void;
+    parallel?: number;
     headers?: {
         [name: string]: string,
     }
@@ -19,7 +20,8 @@ const defaultOpt = {
     onError: noop,
     onProgress: noop,
     onSuccess: noop,
-    headers: {}
+    headers: {},
+    parallel: 1,
 }
 
 const SESSION_KEY = 'UPLOAD_FILE';
@@ -33,7 +35,8 @@ export default class Uploader {
         onError: (err: any) => void;
         onProgress: (p: { [id: string]: number }) => void;
         onSuccess: (res: any[]) => void;
-        headers: { [propName: string]: string }
+        headers: { [propName: string]: string };
+        parallel: number;
     }
     private res: any[] = [];
 
@@ -163,10 +166,14 @@ export default class Uploader {
         const upload = () => {
             const promises = tasks.shift();
             if (!promises) {
-                this.opt.onSuccess(this.res.filter(content => content));
-                this._xhrs = {};
-                this.progress = {};
-                this._abortedFiles = [];
+                const loadingFileIds = Object.keys(this._xhrs).filter((id) => this._abortedFiles.indexOf(id) < 0);
+                const finished = loadingFileIds.every(id => this._xhrs[id].every(xhr => xhr.readyState === 4));
+                if (finished) {
+                    this.opt.onSuccess(this.res.filter(content => content));
+                    this._xhrs = {};
+                    this.progress = {};
+                    this._abortedFiles = [];
+                }
                 return;
             };
 
@@ -186,6 +193,8 @@ export default class Uploader {
             uploadPart();
         }
 
-        upload();
+        for (let i = 0, l = Math.min(this.opt.parallel, files.length); i < l; i++) {
+            upload();
+        }
     }
 }
