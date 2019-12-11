@@ -65,7 +65,7 @@ var Uploader = /** @class */ (function () {
                     var xhr = new XMLHttpRequest();
                     xhr.open('post', _this.url);
                     xhr.setRequestHeader('X-File-Id', file.uploadId);
-                    xhr.setRequestHeader('X-File-Name', file.input.name);
+                    xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.input.name));
                     xhr.setRequestHeader('X-Chunk-Num', j + 1 + '');
                     xhr.setRequestHeader('X-Chunk-Total', n + '');
                     for (var key in _this.opt.headers) {

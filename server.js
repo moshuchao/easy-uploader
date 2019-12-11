@@ -47,7 +47,7 @@ app.get('/', (req, res) => {
 app.post("/upload", function (req, res, next) {
     const busboy = new Busboy({ headers: req.headers });
     const fileId = req.headers['x-file-id'];
-    const fileName = req.headers['x-file-name'];
+    const fileName = decodeURIComponent(req.headers['x-file-name']);
     const chunkNum = req.headers['x-chunk-num'];
     const total = req.headers['x-chunk-total'];
 
