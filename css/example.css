@@ -76,7 +76,6 @@ button {
     right: 0;
     background-color: rgba(255, 255, 255, .6);
     text-align: center;
-    height: 20px;
 }
 
 .uploader-file_progress_inner {
@@ -103,7 +102,7 @@ button {
     right: 0;
     background-color: rgba(0, 0, 0, .6);
     display: none;
-    height: 20px;
+    padding: 4px 0;
 }
 
 

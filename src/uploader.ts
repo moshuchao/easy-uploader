@@ -6,7 +6,7 @@ interface IReq {
 interface IOption {
     partSize?: number;
     onError?: (ev: any) => void;
-    onProgress?: (p: number[]) => void;
+    onProgress?: (p: { [id: string]: number }) => void;
     onSuccess?: (res: any[]) => void;
     headers?: {
         [name: string]: string,
@@ -27,15 +27,17 @@ const SESSION_KEY = 'UPLOAD_FILE';
 
 export default class Uploader {
     private url: string;
-    private progress: number[] = [];
+    private progress: { [id: string]: number } = {};
     private opt: {
         partSize: number;
         onError: (err: any) => void;
-        onProgress: (p: number[]) => void;
+        onProgress: (p: { [id: string]: number }) => void;
         onSuccess: (res: any[]) => void;
         headers: { [propName: string]: string }
     }
     private res: any[] = [];
+
+    private _xhrs: XMLHttpRequest[][] = []
 
     constructor(url: string, opt: IOption = {}) {
         this.url = url;
@@ -65,9 +67,18 @@ export default class Uploader {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
     }
 
+    abort(index: number) {
+        this._xhrs[index].forEach(xhr => {
+            if (xhr.readyState > 0 && xhr.readyState < 4) {
+                return xhr.abort();
+            }
+        })
+    }
+
     submit(files: IReq[]) {
         const tasks = files.map((file, i) => {
             const n = Math.ceil(file.input.size / this.opt.partSize);
+            this._xhrs[i] = [];
             return new Array(n).fill(0).reduce((acc: (() => Promise<any>)[], _, j) => {
                 if (this.isLoaded(file.uploadId, j)) {
                     return acc;
@@ -96,15 +107,18 @@ export default class Uploader {
                                 this.removeLoadedFile(file.uploadId);
                                 this.res[i] = xhr.response;
                             }
-                            return resolve();
+                            return resolve(ev);
                         }
 
                         return reject(xhr.response);
                     };
+
+                    xhr.onabort = resolve;
+
                     xhr.onerror = reject;
                     xhr.upload.onprogress = e => {
                         if (e.lengthComputable) {
-                            this.progress[i] = +(e.loaded / e.total / n + j / n).toFixed(2);
+                            this.progress[file.uploadId] = +(e.loaded / e.total / n + j / n).toFixed(2);
                             if (j + 1 !== n) {
                                 this.opt.onProgress(this.progress);
                             }
@@ -112,6 +126,7 @@ export default class Uploader {
                     };
 
                     xhr.send(formData);
+                    this._xhrs[i].push(xhr);
                 })
 
                 acc.push(p);
@@ -122,7 +137,7 @@ export default class Uploader {
         const upload = () => {
             const promises = tasks.shift();
             if (!promises) {
-                this.opt.onSuccess(this.res);
+                this.opt.onSuccess(this.res.filter(content => content));
                 return;
             };
 
@@ -130,7 +145,12 @@ export default class Uploader {
                 const promise = promises.shift();
                 if (!promise) return upload();
                 promise()
-                    .then(uploadPart) // next part
+                    .then((ev: ProgressEvent) => {
+                        if (ev.type === 'abort') {
+                            return upload(); // next file
+                        }
+                        return uploadPart(); //next part
+                    })
                     .catch(this.opt.onError);
             }
 

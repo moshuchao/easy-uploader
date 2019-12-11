@@ -12,8 +12,9 @@ var SESSION_KEY = 'UPLOAD_FILE';
 var Uploader = /** @class */ (function () {
     function Uploader(url, opt) {
         if (opt === void 0) { opt = {}; }
-        this.progress = [];
+        this.progress = {};
         this.res = [];
+        this._xhrs = [];
         this.url = url;
         this.opt = Object.assign({}, defaultOpt, opt);
     }
@@ -34,10 +35,18 @@ var Uploader = /** @class */ (function () {
         delete loaded[id];
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
     };
+    Uploader.prototype.abort = function (index) {
+        this._xhrs[index].forEach(function (xhr) {
+            if (xhr.readyState > 0 && xhr.readyState < 4) {
+                return xhr.abort();
+            }
+        });
+    };
     Uploader.prototype.submit = function (files) {
         var _this = this;
         var tasks = files.map(function (file, i) {
             var n = Math.ceil(file.input.size / _this.opt.partSize);
+            _this._xhrs[i] = [];
             return new Array(n).fill(0).reduce(function (acc, _, j) {
                 if (_this.isLoaded(file.uploadId, j)) {
                     return acc;
@@ -65,20 +74,22 @@ var Uploader = /** @class */ (function () {
                                 _this.removeLoadedFile(file.uploadId);
                                 _this.res[i] = xhr.response;
                             }
-                            return resolve();
+                            return resolve(ev);
                         }
                         return reject(xhr.response);
                     };
+                    xhr.onabort = resolve;
                     xhr.onerror = reject;
                     xhr.upload.onprogress = function (e) {
                         if (e.lengthComputable) {
-                            _this.progress[i] = +(e.loaded / e.total / n + j / n).toFixed(2);
+                            _this.progress[file.uploadId] = +(e.loaded / e.total / n + j / n).toFixed(2);
                             if (j + 1 !== n) {
                                 _this.opt.onProgress(_this.progress);
                             }
                         }
                     };
                     xhr.send(formData);
+                    _this._xhrs[i].push(xhr);
                 }); };
                 acc.push(p);
                 return acc;
@@ -87,7 +98,7 @@ var Uploader = /** @class */ (function () {
         var upload = function () {
             var promises = tasks.shift();
             if (!promises) {
-                _this.opt.onSuccess(_this.res);
+                _this.opt.onSuccess(_this.res.filter(function (content) { return content; }));
                 return;
             }
             var uploadPart = function () {
@@ -95,7 +106,12 @@ var Uploader = /** @class */ (function () {
                 if (!promise)
                     return upload();
                 promise()
-                    .then(uploadPart) // next part
+                    .then(function (ev) {
+                    if (ev.type === 'abort') {
+                        return upload(); // next file
+                    }
+                    return uploadPart(); //next part
+                })
                     .catch(_this.opt.onError);
             };
             uploadPart();
