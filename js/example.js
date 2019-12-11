@@ -16,13 +16,7 @@ var uploader = new Uploader('/upload', {
     onProgress(progress) {
         for (var id in progress) {
             if (progress.hasOwnProperty(id)) {
-                var $node = document.getElementById(id);
-                if ($node) {
-                    var p = progress[id];
-                    p = +(p * 100).toFixed(2) + '%';
-                    $node.querySelector('.uploader-file_progress_text').textContent = p;
-                    $node.querySelector('.uploader-file_progress_inner').style.width = p;
-                }
+                setProgress(id, progress[id]);
             }
         }
     },
@@ -75,9 +69,20 @@ var revokeObjectURL = function (url) {
 var submitImages = function () {
     if (uploadFiles.length > 0) {
         uploader.submit(uploadFiles);
+        // uploadFiles.forEach(function (file) {
+        //     setProgress(file.uploadId, 0);
+        // })
     }
 }
 
+var setProgress = function (id, p) {
+    var $node = document.getElementById(id);
+    if ($node) {
+        p = +(p * 100).toFixed(2) + '%';
+        $node.querySelector('.uploader-file_progress_text').textContent = p;
+        $node.querySelector('.uploader-file_progress_inner').style.width = p;
+    }
+}
 var onAbort = function (id) {
     uploader.abort(id);
     var elem = document.getElementById(id);
