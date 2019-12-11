@@ -72,10 +72,15 @@ export default class Uploader {
             if (xhr.readyState > 0 && xhr.readyState < 4) {
                 return xhr.abort();
             }
-        })
+        });
     }
 
     submit(files: IReq[]) {
+        if (this._xhrs.length > 0) {
+            return console.warn('Must be waiting upload finished!');
+        }
+
+        this.res = [];
         const tasks = files.map((file, i) => {
             const n = Math.ceil(file.input.size / this.opt.partSize);
             this._xhrs[i] = [];
@@ -138,6 +143,8 @@ export default class Uploader {
             const promises = tasks.shift();
             if (!promises) {
                 this.opt.onSuccess(this.res.filter(content => content));
+                this._xhrs = [];
+                this.progress = {};
                 return;
             };
 

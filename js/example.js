@@ -2,6 +2,8 @@ var $file = document.getElementById('file');
 var $imagesContainer = document.getElementById('images-container');
 var imageTpl = document.getElementById('image-tpl').innerHTML;
 var $uploader = document.getElementById('uploader');
+var prevUploadData = [];
+
 
 var uploadFiles = [];
 
@@ -64,6 +66,7 @@ var onSelectImageChange = function (files) {
 
         $uploader.insertAdjacentHTML('beforebegin', uploadImage.join(''));
         uploadFiles = uploadFiles.concat(md5Files);
+        prevUploadData = uploadFiles.slice();
     })
 }
 
@@ -77,8 +80,13 @@ var submitImages = function () {
     }
 }
 
-var onAbort = function (i, id) {
+var onAbort = function (id) {
+    var i = prevUploadData.findIndex(function (file) {
+        return file.uploadId === id;
+    })
+    if (i < 0) return;
     uploader.abort(i);
     var elem = document.getElementById(id);
     elem.parentNode.removeChild(elem);
+    uploadFiles.splice(i, 1);
 }

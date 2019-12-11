@@ -44,6 +44,10 @@ var Uploader = /** @class */ (function () {
     };
     Uploader.prototype.submit = function (files) {
         var _this = this;
+        if (this._xhrs.length > 0) {
+            return console.warn('Must be waiting upload finished!');
+        }
+        this.res = [];
         var tasks = files.map(function (file, i) {
             var n = Math.ceil(file.input.size / _this.opt.partSize);
             _this._xhrs[i] = [];
@@ -99,6 +103,8 @@ var Uploader = /** @class */ (function () {
             var promises = tasks.shift();
             if (!promises) {
                 _this.opt.onSuccess(_this.res.filter(function (content) { return content; }));
+                _this._xhrs = [];
+                _this.progress = {};
                 return;
             }
             var uploadPart = function () {
