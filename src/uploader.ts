@@ -39,6 +39,8 @@ export default class Uploader {
 
     private _xhrs: { [id: string]: XMLHttpRequest[] } = {}
 
+    private _abortedFiles: string[] = []
+
     constructor(url: string, opt: IOption = {}) {
         this.url = url;
         this.opt = Object.assign({}, defaultOpt, opt);
@@ -67,10 +69,21 @@ export default class Uploader {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
     }
 
+    abortAll() {
+        for (let id in this._xhrs) {
+            if (this._xhrs.hasOwnProperty(id)) {
+                this.abort(id);
+            }
+        }
+    }
+
     abort(id: string) {
         if (!this._xhrs[id]) {
             return console.warn('Can not abort xhr!');
         }
+
+        this._abortedFiles.push(id);
+
         this._xhrs[id].forEach(xhr => {
             if (xhr.readyState > 0 && xhr.readyState < 4) {
                 return xhr.abort();
@@ -93,6 +106,11 @@ export default class Uploader {
                 }
 
                 const p = () => new Promise<any>((resolve, reject) => {
+                    if (this._abortedFiles.indexOf(file.uploadId) > -1) {
+                        return resolve({
+                            type: 'abort',
+                        });
+                    }
                     const partFile = file.input.slice(j * this.opt.partSize, (j + 1) * this.opt.partSize);
                     const formData = new FormData();
                     formData.append('file', partFile);
@@ -148,6 +166,7 @@ export default class Uploader {
                 this.opt.onSuccess(this.res.filter(content => content));
                 this._xhrs = {};
                 this.progress = {};
+                this._abortedFiles = [];
                 return;
             };
 

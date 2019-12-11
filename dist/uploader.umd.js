@@ -19,6 +19,7 @@
             this.progress = {};
             this.res = [];
             this._xhrs = {};
+            this._abortedFiles = [];
             this.url = url;
             this.opt = Object.assign({}, defaultOpt, opt);
         }
@@ -39,10 +40,18 @@
             delete loaded[id];
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
         };
+        Uploader.prototype.abortAll = function () {
+            for (var id in this._xhrs) {
+                if (this._xhrs.hasOwnProperty(id)) {
+                    this.abort(id);
+                }
+            }
+        };
         Uploader.prototype.abort = function (id) {
             if (!this._xhrs[id]) {
                 return console.warn('Can not abort xhr!');
             }
+            this._abortedFiles.push(id);
             this._xhrs[id].forEach(function (xhr) {
                 if (xhr.readyState > 0 && xhr.readyState < 4) {
                     return xhr.abort();
@@ -63,6 +72,11 @@
                         return acc;
                     }
                     var p = function () { return new Promise(function (resolve, reject) {
+                        if (_this._abortedFiles.indexOf(file.uploadId) > -1) {
+                            return resolve({
+                                type: 'abort',
+                            });
+                        }
                         var partFile = file.input.slice(j * _this.opt.partSize, (j + 1) * _this.opt.partSize);
                         var formData = new FormData();
                         formData.append('file', partFile);
@@ -112,6 +126,7 @@
                     _this.opt.onSuccess(_this.res.filter(function (content) { return content; }));
                     _this._xhrs = {};
                     _this.progress = {};
+                    _this._abortedFiles = [];
                     return;
                 }
                 var uploadPart = function () {

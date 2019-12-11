@@ -87,3 +87,7 @@ var onAbort = function (id) {
     });
     uploadFiles.splice(i, 1);
 }
+
+var onAbortAll = function () {
+    uploader.abortAll();
+}

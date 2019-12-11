@@ -23,6 +23,7 @@
         </ul>
         <p>
             <button class="btn-upload" onclick="submitImages()">Ok, I want to submit</button>
+            <button class="btn-upload" onclick="onAbortAll()">Cancel all uploading requests</button>
         </p>
     </div>
     <template id="image-tpl">
@@ -36,7 +37,7 @@
                 </div>
             </div>
             <div class="uploader-file_action">
-                <button onclick="onAbort('{id}')">abort it</button>
+                <button onclick="onAbort('{id}')">abort & delete</button>
             </div>
         </li>
     </template>
