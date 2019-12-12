@@ -145,12 +145,11 @@ var Uploader = /** @class */ (function () {
             };
             uploadPart();
         };
-        for (var i = 0, l = Math.min(this.opt.parallel, files.length); i < l; i++) {
+        for (var i = 0, l = Math.max(5, Math.min(this.opt.parallel, files.length)); i < l; i++) {
             upload();
         }
     };
     return Uploader;
 }());
-//# sourceMappingURL=uploader.js.map
 
 module.exports = Uploader;
