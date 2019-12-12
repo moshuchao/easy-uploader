@@ -1,5 +1,5 @@
 {
-  "name": "easy-uploader",
+  "name": "easy-uploader.js",
   "version": "1.0.0",
   "main": "dist/uploader.cjs.js",
   "author": "moshuchao <chaoshumo@gmail.com>",
