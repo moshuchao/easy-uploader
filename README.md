@@ -43,6 +43,13 @@ instance methods
 - abort(id): id: string, above id;
 - abortAll()
 
+request headers:
+- X-Chunk-Num
+- X-Chunk-Total
+- X-File-Id
+- X-File-Name
+- custom header
+
 ## Important
 1. Easy-uploader uses native js, include `Promise`, `Array.every`. if supports lower browsers, remember to use polyfills. 
 2. To use breakpoint, may be using md5.js(third-party lib). Such as `js-md5`(in my example).
