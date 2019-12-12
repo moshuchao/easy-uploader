@@ -9,6 +9,9 @@ A modern file uploader
 - Real-time progress
 - Cancelable
 
+## Example
+https://codesandbox.io/s/distracted-montalcini-7cyzi
+
 ## Installation
 ``` bash
 npm install easy-uploader --save
