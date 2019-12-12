@@ -1,3 +1,4 @@
+// 1
 var $file = document.getElementById('file');
 var $imagesContainer = document.getElementById('images-container');
 var imageTpl = document.getElementById('image-tpl').innerHTML;
@@ -8,7 +9,7 @@ var uploadFiles = [];
 
 var uploader = new Uploader('/upload', {
     onSuccess(res) {
-        console.log(res)
+        document.getElementById('example-1').innerText = JSON.stringify(res);
     },
     onError(ev) {
         console.log(ev)
@@ -28,22 +29,6 @@ var uploader = new Uploader('/upload', {
 var onSelectImageChange = function (files) {
     if (!files.item(0)) return;
 
-    var createReader = function (file) {
-        return new Promise(function (resolve, reject) {
-            var reader = new FileReader();
-            reader.onload = function (ev) {
-                return resolve({
-                    uploadId: md5(ev.target.result),
-                    input: file,
-                });
-            }
-
-            reader.onerror = reject;
-
-            reader.readAsArrayBuffer(file)
-        });
-    }
-
     var promises = Array.from(files).map(createReader);
 
     Promise.all(promises).then(function (md5Files) {
@@ -62,12 +47,30 @@ var onSelectImageChange = function (files) {
     })
 }
 
+var createReader = function (file) {
+    return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            return resolve({
+                uploadId: md5(ev.target.result),
+                input: file,
+            });
+        }
+
+        reader.onerror = reject;
+
+        reader.readAsArrayBuffer(file)
+    });
+}
+
 var revokeObjectURL = function (url) {
     window.URL.revokeObjectURL(url);
 }
 
 var submitImages = function () {
     if (uploadFiles.length > 0) {
+        var parallel = +document.getElementById('parallel').value;
+        uploader.opt.parallel = Number.isInteger(parallel) ? Math.max(parallel, 1) : 1;
         uploader.submit(uploadFiles);
         // uploadFiles.forEach(function (file) {
         //     setProgress(file.uploadId, 0);
@@ -95,4 +98,21 @@ var onAbort = function (id) {
 
 var onAbortAll = function () {
     uploader.abortAll();
+}
+
+// 2
+var onUploadFile = function (target) {
+    var file = target.files[0];
+    if (!file) return;
+
+    createReader(file).then(function (uploadData) {
+        var _uld = new Uploader('/upload', {
+            onSuccess(res) {
+                document.getElementById('example-2').innerText = JSON.stringify(res);
+                target.value = '';
+            },
+        });
+
+        _uld.submit([uploadData]);
+    }).catch(console.error)
 }
