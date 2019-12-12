@@ -24,7 +24,7 @@ const instance = new Uploader('/upload')
 ```
 3. select file and upload
 ``` js
-instance.submit([id, input:'your file'])
+instance.submit([{id, input:'your file'}])
 ```
 ## Docs
 ``` js
@@ -39,7 +39,7 @@ options:
 - headers: {}
 
 instance methods
-- submit([id,input]): id: string; input: File;
+- submit([{id,input}]): id: string; input: File;
 - abort(id): id: string, above id;
 - abortAll()
 
