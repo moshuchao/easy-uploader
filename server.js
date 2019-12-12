@@ -9,6 +9,7 @@ const app = express();
 app.use('/dist', express.static('dist'));
 app.use('/js', express.static('js'));
 app.use('/css', express.static('css'));
+app.use('/uploads', express.static('uploads'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
