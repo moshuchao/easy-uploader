@@ -9,7 +9,8 @@
     "build": "rollup -c"
   },
   "files": [
-    "dist"
+    "dist",
+    "index.d.ts"
   ],
   "keywords": [
     "html5",
