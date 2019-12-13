@@ -14,12 +14,12 @@ https://codesandbox.io/s/distracted-montalcini-7cyzi
 
 ## Installation
 ``` bash
-npm install easy-uploader --save
+npm install easy-uploader.js --save
 ```
 ## Usage
 1. import Uploader
 ``` js
-import Uploader from 'easy-uploader'
+import Uploader from 'easy-uploader.js'
 ```
 2. create a instance
 ``` js
