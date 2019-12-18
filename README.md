@@ -5,7 +5,7 @@ A modern file uploader
 - Lightweight(no dependencies)
 - Supports breakpoint
 - Supports fragment
-- Parallel transmission
+- Parallel transmission
 - Real-time progress
 - Cancelable
 
