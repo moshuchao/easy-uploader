@@ -1,6 +1,6 @@
 {
   "name": "easy-uploader.js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "dist/uploader.cjs.js",
   "author": "moshuchao <chaoshumo@gmail.com>",
   "license": "MIT",
