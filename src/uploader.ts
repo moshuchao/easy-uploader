@@ -193,7 +193,7 @@ export default class Uploader {
             uploadPart();
         }
 
-        for (let i = 0, l = Math.max(5, Math.min(this.opt.parallel, files.length)); i < l; i++) {
+        for (let i = 0, l = Math.min(this.opt.parallel, files.length); i < l; i++) {
             upload();
         }
     }
