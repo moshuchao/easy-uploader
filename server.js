@@ -2,6 +2,7 @@ const express = require("express");
 const Busboy = require('busboy');
 const crypto = require("crypto");
 const fs = require('fs');
+const glob = require('glob');
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -13,10 +14,13 @@ app.use('/uploads', express.static('uploads'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-const fileStorage = {};
 
 if (!fs.existsSync('uploads/')) {
     fs.mkdirSync('uploads')
+}
+
+function getFileNum(name = '') {
+    return +(name.split('_')[1]);
 }
 
 app.get('/', (req, res) => {
@@ -24,26 +28,6 @@ app.get('/', (req, res) => {
     stream.on('open', () => stream.pipe(res));
     stream.on('close', () => res.end());
 })
-
-// app.post('/upload/init', (req, res, next) => {
-//     const files = [];
-//     req.body.forEach(file => {
-//         const id = crypto.randomBytes(8).toString('hex');
-//         const filePath = 'uploads/' + Date.now() + '_' + id + file.name.substring(file.name.lastIndexOf('.'));
-//         files.push({
-//             id,
-//             url: filePath,
-//         });
-//         fileStorage[id] = {
-//             total: file.total,
-//             path: filePath,
-//             chunks: [],
-//         }
-//     });
-
-//     res.json(files);
-// })
-
 
 app.post("/upload", function (req, res, next) {
     const busboy = new Busboy({ headers: req.headers });
@@ -54,20 +38,13 @@ app.post("/upload", function (req, res, next) {
 
     if (!fileId || !chunkNum || !total || !fileName) return res.sendStatus(400);
 
-    if (!fileStorage[fileId]) {
-        fileStorage[fileId] = [];
-    }
-    const chunks = fileStorage[fileId];
-
-    // return res.sendStatus(500)
-
     busboy.on('file', (fieldname, rdStream, filename, encoding, mimetype) => {
         const partChunks = [];
         rdStream.on('data', data => {
             partChunks.push(data);
         });
         rdStream.on('end', () => {
-            chunks[chunkNum - 1] = Buffer.concat(partChunks);
+            writeFile('uploads/' + fileId + '_' + chunkNum, partChunks);
         });
     })
 
@@ -75,11 +52,13 @@ app.post("/upload", function (req, res, next) {
         if (chunkNum === total) {
             const id = crypto.randomBytes(8).toString('hex');
             const filePath = 'uploads/' + id + '_' + fileName;
-            const stream = fs.createWriteStream(filePath);
-            stream.write(Buffer.concat(chunks));
-            stream.end();
+            const chunks = [];
+            glob.sync('uploads/' + fileId + '_*').forEach(path => {
+                chunks[getFileNum(path) - 1] = fs.readFileSync(path);
+                fs.unlinkSync(path);
+            });
 
-            delete fileStorage[fileId];
+            writeFile(filePath, chunks);
             return res.send(filePath)
         }
 
@@ -88,5 +67,11 @@ app.post("/upload", function (req, res, next) {
 
     req.pipe(busboy);
 });
+
+function writeFile(filePath, chunks) {
+    const stream = fs.createWriteStream(filePath);
+    stream.write(Buffer.concat(chunks));
+    stream.end();
+}
 
 app.listen(3000);
