@@ -24,9 +24,6 @@ const defaultOpt = {
     parallel: 1,
 }
 
-const SESSION_KEY = 'UPLOAD_FILE';
-
-
 export default class Uploader {
     private url: string;
     private progress: { [id: string]: number } = {};
@@ -47,29 +44,6 @@ export default class Uploader {
     constructor(url: string, opt: IOption = {}) {
         this.url = url;
         this.opt = Object.assign({}, defaultOpt, opt);
-    }
-
-    getLoadedFile(): {
-        [id: string]: number
-    } {
-        const loaded = sessionStorage.getItem(SESSION_KEY);
-        return loaded ? JSON.parse(loaded) : {}
-    }
-
-    isLoaded(id: string, index: number) {
-        return index <= this.getLoadedFile()[id]
-    }
-
-    setLoadedFile(id: string, index: number): void {
-        const loaded = this.getLoadedFile();
-        loaded[id] = index;
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
-    }
-
-    removeLoadedFile(id: string) {
-        const loaded = this.getLoadedFile();
-        delete loaded[id];
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(loaded));
     }
 
     abortAll() {
@@ -94,107 +68,120 @@ export default class Uploader {
         });
     }
 
+    query(ids: string[], cb: (ret: { [id: string]: number }) => void) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('post', '/upload/query');
+        xhr.setRequestHeader('content-type', 'application/json');
+        xhr.onload = (ev) => {
+            if (xhr.status === 200) {
+                cb(JSON.parse(xhr.response));
+            }
+
+        };
+        xhr.send(JSON.stringify({ ids }));
+    }
+
     submit(files: IReq[]) {
         if (Object.keys(this._xhrs).length > 0) {
             return console.warn('Must be waiting upload finished!');
         }
 
         this.res = [];
-        const tasks = files.map((file, i) => {
-            const n = Math.ceil(file.input.size / this.opt.partSize);
-            this._xhrs[file.uploadId] = [];
-            return new Array(n).fill(0).reduce((acc: (() => Promise<any>)[], _, j) => {
-                if (this.isLoaded(file.uploadId, j)) {
-                    return acc;
-                }
+        this.query(files.map(file => file.uploadId), (_loaded) => {
+            const tasks = files.map((file, i) => {
+                const n = Math.ceil(file.input.size / this.opt.partSize);
+                this._xhrs[file.uploadId] = [];
+                return new Array(n).fill(0).reduce((acc: (() => Promise<any>)[], _, j) => {
+                    if (j + 1 <= _loaded[file.uploadId]) {
+                        return acc;
+                    }
 
-                const p = () => new Promise<any>((resolve, reject) => {
-                    if (this._abortedFiles.indexOf(file.uploadId) > -1) {
-                        return resolve({
-                            type: 'abort',
-                        });
-                    }
-                    const partFile = file.input.slice(j * this.opt.partSize, (j + 1) * this.opt.partSize);
-                    const formData = new FormData();
-                    formData.append('file', partFile);
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('post', this.url);
-                    xhr.setRequestHeader('X-File-Id', file.uploadId);
-                    xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.input.name));
-                    xhr.setRequestHeader('X-Chunk-Num', j + 1 + '');
-                    xhr.setRequestHeader('X-Chunk-Total', n + '');
-                    for (const key in this.opt.headers) {
-                        if (this.opt.headers.hasOwnProperty(key)) {
-                            xhr.setRequestHeader(key, encodeURIComponent(this.opt.headers[key]));
+                    const p = () => new Promise<any>((resolve, reject) => {
+                        if (this._abortedFiles.indexOf(file.uploadId) > -1) {
+                            return resolve({
+                                type: 'abort',
+                            });
                         }
-                    }
-                    xhr.onload = (ev) => {
-                        if (xhr.status === 200) {
-                            this.setLoadedFile(file.uploadId, j);
-                            this.opt.onProgress(this.progress);
-                            if (j + 1 === n) {
-                                this.removeLoadedFile(file.uploadId);
-                                this.res[i] = xhr.response;
+                        const partFile = file.input.slice(j * this.opt.partSize, (j + 1) * this.opt.partSize);
+                        const formData = new FormData();
+                        formData.append('file', partFile);
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('post', this.url);
+                        xhr.setRequestHeader('X-File-Id', file.uploadId);
+                        xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.input.name));
+                        xhr.setRequestHeader('X-Chunk-Num', j + 1 + '');
+                        xhr.setRequestHeader('X-Chunk-Total', n + '');
+                        for (const key in this.opt.headers) {
+                            if (this.opt.headers.hasOwnProperty(key)) {
+                                xhr.setRequestHeader(key, encodeURIComponent(this.opt.headers[key]));
                             }
-                            return resolve(ev);
                         }
-
-                        return reject(xhr.response);
-                    };
-
-                    xhr.onabort = resolve;
-
-                    xhr.onerror = reject;
-                    xhr.upload.onprogress = e => {
-                        if (e.lengthComputable) {
-                            this.progress[file.uploadId] = +(e.loaded / e.total / n + j / n).toFixed(2);
-                            if (j + 1 !== n) {
+                        xhr.onload = (ev) => {
+                            if (xhr.status === 200) {
                                 this.opt.onProgress(this.progress);
+                                if (j + 1 === n) {
+                                    this.res[i] = xhr.response;
+                                }
+                                return resolve(ev);
                             }
-                        }
-                    };
 
-                    xhr.send(formData);
-                    this._xhrs[file.uploadId].push(xhr);
-                })
+                            return reject(xhr.response);
+                        };
 
-                acc.push(p);
-                return acc;
-            }, []);
-        });
+                        xhr.onabort = resolve;
 
-        const upload = () => {
-            const promises = tasks.shift();
-            if (!promises) {
-                const loadingFileIds = Object.keys(this._xhrs).filter((id) => this._abortedFiles.indexOf(id) < 0);
-                const finished = loadingFileIds.every(id => this._xhrs[id].every(xhr => xhr.readyState === 4));
-                if (finished) {
-                    this.opt.onSuccess(this.res.filter(content => content));
-                    this._xhrs = {};
-                    this.progress = {};
-                    this._abortedFiles = [];
-                }
-                return;
-            };
+                        xhr.onerror = reject;
+                        xhr.upload.onprogress = e => {
+                            if (e.lengthComputable) {
+                                this.progress[file.uploadId] = +(e.loaded / e.total / n + j / n).toFixed(2);
+                                if (j + 1 !== n) {
+                                    this.opt.onProgress(this.progress);
+                                }
+                            }
+                        };
 
-            const uploadPart = () => {
-                const promise = promises.shift();
-                if (!promise) return upload();
-                promise()
-                    .then((ev: ProgressEvent) => {
-                        if (ev.type === 'abort') {
-                            return upload(); // next file
-                        }
-                        return uploadPart(); //next part
+                        xhr.send(formData);
+                        this._xhrs[file.uploadId].push(xhr);
                     })
-                    .catch(this.opt.onError);
+
+                    acc.push(p);
+                    return acc;
+                }, []);
+            });
+
+            const upload = () => {
+                const promises = tasks.shift();
+                if (!promises) {
+                    const loadingFileIds = Object.keys(this._xhrs).filter((id) => this._abortedFiles.indexOf(id) < 0);
+                    const finished = loadingFileIds.every(id => this._xhrs[id].every(xhr => xhr.readyState === 4));
+                    if (finished) {
+                        this.opt.onSuccess(this.res.filter(content => content));
+                        this._xhrs = {};
+                        this.progress = {};
+                        this._abortedFiles = [];
+                    }
+                    return;
+                };
+
+                const uploadPart = () => {
+                    const promise = promises.shift();
+                    if (!promise) return upload();
+                    promise()
+                        .then((ev: ProgressEvent) => {
+                            if (ev.type === 'abort') {
+                                return upload(); // next file
+                            }
+                            return uploadPart(); //next part
+                        })
+                        .catch(this.opt.onError);
+                }
+
+                uploadPart();
             }
 
-            uploadPart();
-        }
-
-        for (let i = 0, l = Math.min(this.opt.parallel, files.length); i < l; i++) {
-            upload();
-        }
+            for (let i = 0, l = Math.min(this.opt.parallel, files.length); i < l; i++) {
+                upload();
+            }
+        });
     }
 }

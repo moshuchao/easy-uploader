@@ -27,7 +27,17 @@ app.get('/', (req, res) => {
     const stream = fs.createReadStream('index.html');
     stream.on('open', () => stream.pipe(res));
     stream.on('close', () => res.end());
-})
+});
+
+app.post('/upload/query', (req, res) => {
+    const ids = req.body.ids;
+    if (!ids) return res.sendStatus(400);
+    const result = ids.reduce((acc, id) => {
+        acc[id] = Math.max.call(Math, 0, ...glob.sync('uploads/' + id + '_*').map(getFileNum));
+        return acc;
+    }, {});
+    res.json(result);
+});
 
 app.post("/upload", function (req, res, next) {
     const busboy = new Busboy({ headers: req.headers });
