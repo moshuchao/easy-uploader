@@ -5,6 +5,7 @@ const fs = require('fs');
 const glob = require('glob');
 const bodyParser = require('body-parser');
 
+// console.log(fs.readFileSync('uploads/cebd877ac9610ac02ecb2ff9bae05438_1').length)
 const app = express();
 
 app.use('/dist', express.static('dist'));
@@ -63,12 +64,24 @@ app.post("/upload", function (req, res, next) {
             const id = crypto.randomBytes(8).toString('hex');
             const filePath = 'uploads/' + id + '_' + fileName;
             const chunks = [];
-            glob.sync('uploads/' + fileId + '_*').forEach(path => {
-                chunks[getFileNum(path) - 1] = fs.readFileSync(path);
-                fs.unlinkSync(path);
-            });
+            const paths = glob.sync('uploads/' + fileId + '_*');
 
-            writeFile(filePath, chunks);
+            const pushBuff = () => {
+                const p = paths.shift();
+                if (!p) {
+                    return writeFile(filePath, chunks);
+                };
+                fs.readFile(p, (err, b) => {
+                    if (err) {
+                        console.log('err', err);
+                        return;
+                    }
+                    chunks[getFileNum(p) - 1] = b;
+                    fs.unlink(p, pushBuff)
+                });
+            }
+
+            pushBuff();
             return res.send(filePath)
         }
 
