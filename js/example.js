@@ -32,12 +32,12 @@ var onSelectImageChange = function (files) {
     var promises = Array.from(files).map(createReader);
 
     Promise.all(promises).then(function (md5Files) {
-        var uploadImage = md5Files.map(function (file, i) {
+        var uploadImage = md5Files.map(function (_, i) {
             return imageTpl
-                .replace(/{id}/g, file.uploadId)
-                .replace('{src}', window.URL.createObjectURL(file.input))
-                .replace('{alt}', file.input.name)
-                .replace('{size}', (file.input.size / 1024).toFixed(2) + 'kb')
+                .replace(/{id}/g, _.id)
+                .replace('{src}', window.URL.createObjectURL(_.file))
+                .replace('{alt}', _.file.name)
+                .replace('{size}', (_.file.size / 1024).toFixed(2) + 'kb')
                 .replace(/{index}/g, i)
                 .trim()
         });
@@ -52,8 +52,8 @@ var createReader = function (file) {
         var reader = new FileReader();
         reader.onload = function (ev) {
             return resolve({
-                uploadId: md5(ev.target.result),
-                input: file,
+                id: md5(ev.target.result),
+                file: file,
             });
         }
 
@@ -73,7 +73,7 @@ var submitImages = function () {
         uploader.opt.parallel = Number.isInteger(parallel) ? Math.max(parallel, 1) : 1;
         uploader.submit(uploadFiles);
         // uploadFiles.forEach(function (file) {
-        //     setProgress(file.uploadId, 0);
+        //     setProgress(file.id, 0);
         // })
     }
 }
@@ -91,7 +91,7 @@ var onAbort = function (id) {
     var elem = document.getElementById(id);
     elem.parentNode.removeChild(elem);
     var i = uploadFiles.findIndex(function (file) {
-        return file.uploadId === id;
+        return file.id === id;
     });
     uploadFiles.splice(i, 1);
 }
