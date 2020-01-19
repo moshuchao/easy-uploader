@@ -8,9 +8,7 @@ const bodyParser = require('body-parser');
 // console.log(fs.readFileSync('uploads/cebd877ac9610ac02ecb2ff9bae05438_1').length)
 const app = express();
 
-app.use('/dist', express.static('dist'));
-app.use('/js', express.static('js'));
-app.use('/css', express.static('css'));
+app.use(express.static('dist'));
 app.use('/uploads', express.static('uploads'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -23,12 +21,6 @@ if (!fs.existsSync('uploads/')) {
 function getFileNum(name = '') {
     return +(name.split('_')[1]);
 }
-
-app.get('/', (req, res) => {
-    const stream = fs.createReadStream('index.html');
-    stream.on('open', () => stream.pipe(res));
-    stream.on('close', () => res.end());
-});
 
 app.post('/upload/query', (req, res) => {
     const ids = req.body.ids;
@@ -97,4 +89,4 @@ function writeFile(filePath, chunks) {
     stream.end();
 }
 
-app.listen(3000);
+app.listen(8080);

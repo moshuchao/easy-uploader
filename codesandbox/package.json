@@ -1,0 +1,24 @@
+{
+  "name": "codesandbox",
+  "version": "1.0.0",
+  "main": "src/main.tsx",
+  "license": "MIT",
+  "scripts": {
+    "start": "yarn build && node server.js",
+    "dev": "parcel watch src/index.html",
+    "build": "parcel build src/index.html"
+  },
+  "devDependencies": {
+    "@types/react": "^16.9.17",
+    "@types/react-dom": "^16.9.4",
+    "parcel-bundler": "^1.12.4"
+  },
+  "dependencies": {
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "typescript": "^3.7.5",
+    "body-parser": "^1.19.0",
+    "busboy": "^0.3.1",
+    "express": "^4.17.1"
+  }
+}
