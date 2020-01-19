@@ -1,34 +1,42 @@
+// node_modules/.bin/tsc -p tsconfig.json
 interface IReq {
-    uploadId: string;
-    input: File;
+    id: string;
+    file: File;
+}
+interface IKV {
+    [id: string]: number;
 }
 interface IOption {
     partSize?: number;
     onError?: (ev: any) => void;
-    onProgress?: (p: {
-        [id: string]: number;
-    }) => void;
+    onProgress?: (p: IKV) => void;
     onSuccess?: (res: any[]) => void;
     parallel?: number;
     headers?: {
         [name: string]: string;
     };
 }
+interface IData {
+    id: string;
+    file: File;
+    total: number;
+    chunks: Blob[];
+}
 export default class Uploader {
     private url;
     private progress;
     private opt;
     private res;
-    private _xhrs;
-    private _abortedFiles;
+    private _xhr;
+    private _aborted;
+    private _data;
+    private _loadedChunk;
     constructor(url: string, opt?: IOption);
-    getLoadedFile(): {
-        [id: string]: number;
-    };
-    isLoaded(id: string, index: number): boolean;
-    setLoadedFile(id: string, index: number): void;
-    removeLoadedFile(id: string): void;
+    isFinished(): boolean;
     abortAll(): void;
     abort(id: string): void;
-    submit(files: IReq[]): void;
+    query(ids: string[], cb: () => void): void;
+    uploadChunk(item: IData): void;
+    startUpload(): void;
+    submit(data: IReq[] | IReq): void;
 }
