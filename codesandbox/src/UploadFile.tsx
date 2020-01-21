@@ -8,6 +8,17 @@ const promise = (time: number) => {
     })
 }
 
+const formatFileSize = (total: number) => {
+    const unit = ['B', 'KB', 'MB', 'GB']
+    let result = total;
+    while (result / 1024 > 1 && unit.length > 1) {
+        result = result / 1024;
+        unit.shift();
+    }
+
+    return result.toFixed(2) + unit[0];
+}
+
 export default (props: any) => {
     const [data, setData] = React.useState<{ id: string, file: File }[]>([]);
     const readAsArrayBuffer = useReader();
@@ -30,9 +41,9 @@ export default (props: any) => {
                 {data.map((item) =>
                     <li key={item.id}>
                         <p>{item.file.name}</p>
-                        <p>size: {item.file.size}<i>b</i> </p>
+                        <p>size:<i>{formatFileSize(item.file.size)}</i></p>
                         {progress[item.id]
-                            && (<p>progress: {+(progress[item.id] * 100).toFixed(2) + '%'}
+                            && (<p>progress:{+(progress[item.id] * 100).toFixed(2) + '%'}
                                 {progress[item.id] < 1 && <button onClick={() => uploader.abort(item.id)}>cancel</button>}
                             </p>)
                         }
