@@ -5,7 +5,8 @@ export default () => {
         return new Promise<string | ArrayBuffer>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = ev => {
-                const result = ev.target?.result;
+                if (!ev.target) return;
+                const result = ev.target.result;
                 if (result) resolve(result);
             }
 
