@@ -116,8 +116,8 @@ export default class Uploader {
         }
         xhr.onload = (ev) => {
             if (xhr.status === 200) {
-                this.opt.onProgress(this.progress);
                 if (n === t) {
+                    this.opt.onProgress(this.progress);
                     this.res.push(xhr.response);
                 }
                 return this.uploadChunk(item);
