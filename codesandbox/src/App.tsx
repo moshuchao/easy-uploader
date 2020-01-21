@@ -1,9 +1,8 @@
 import React from 'react'
 
-export default class App extends React.Component {
-    render() {
-        return (
-            <div>app</div>
-        )
-    }
-}
+import UploadFile from './UploadFile'
+export default () => (
+    <div>
+        <UploadFile/>
+    </div>
+)
