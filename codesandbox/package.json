@@ -1,7 +1,7 @@
 {
   "name": "codesandbox",
   "version": "1.0.0",
-  "main": "src/main.tsx",
+  "main": "server.js",
   "license": "MIT",
   "scripts": {
     "start": "yarn build && node server.js",
