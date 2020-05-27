@@ -1,11 +1,10 @@
 {
-  "name": "codesandbox",
+  "name": "uploader-site",
   "version": "1.0.0",
-  "main": "server.js",
   "license": "MIT",
   "scripts": {
-    "start": "yarn build && node server.js",
-    "dev": "parcel watch src/index.html",
+    "start": "yarn build",
+    "dev": "parcel src/index.html",
     "build": "parcel build src/index.html"
   },
   "devDependencies": {
@@ -16,9 +15,6 @@
   "dependencies": {
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "typescript": "^3.7.5",
-    "body-parser": "^1.19.0",
-    "busboy": "^0.3.1",
-    "express": "^4.17.1"
+    "typescript": "^3.7.5"
   }
 }
