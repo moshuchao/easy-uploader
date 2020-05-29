@@ -1,15 +1,23 @@
+export type Dict<T> = {
+    [x: string]: T
+}
+
+export type OptionsProps = {
+    partSize: number;
+    headers: Dict<string>;
+    parallel: number;
+}
+
 export type SubmitData = {
     id: string;
     file: File
 }
 
-export type SuccessCallback = {
-    [md5: string]: string;
-}
+export type SuccessCallback = Dict<string>
 
-export type ProgressCallback = {
-    [md5: string]: number;
-}
+export type ProgressCallback = Dict<number>
+
+export type ErrorCallback = Error;
 
 export type Res = {
     uploaded?: number[];
@@ -21,6 +29,7 @@ export type Listener<T> = (arg: T) => void;
 export type EventCallbackMap = {
     progress: ProgressCallback;
     success: SuccessCallback;
+    error: ErrorCallback
 }
 
 export type Event = {
