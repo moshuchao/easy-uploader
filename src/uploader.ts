@@ -1,43 +1,22 @@
-interface SubmitData {
-    id: string;
-    file: File
-}
+import EventEmitter from './event-emitter';
+import { Dict, SubmitData, SuccessCallback, ProgressCallback, ErrorCallback, Res, OptionsProps } from './types';
 
-type SuccessCbProps = {
-    [md5: string]: string;
-}
-
-type Progress = {
-    [md5: string]: number;
-}
-
-type Res = {
-    uploaded?: number[];
-    url?: string;
-}
-
-const noop = (data?: any) => { }
-
-const defaultOpt = {
+const defaultOpt: OptionsProps = {
     partSize: 100000,
-    onError: noop,
-    onProgress: (props: Progress) => { },
-    onSuccess: (props: SuccessCbProps) => { },
-    headers: {} as { [x: string]: string },
+    headers: {},
     parallel: 1,
 }
 
-type OptProps = typeof defaultOpt;
-
-export default class Uploader {
+export default class Uploader extends EventEmitter {
     private url: string;
-    private progress: Progress = {}
-    private opt: OptProps
-    private res: SuccessCbProps = {}
-    private uploaded: { [x: string]: number[] } = {}
+    private progress: ProgressCallback = {}
+    private opt: OptionsProps
+    private res: SuccessCallback = {}
+    private uploaded: Dict<number[]> = {}
     private aborted: string[] = [];
 
     constructor(url: string, opt = {}) {
+        super();
         this.url = url;
         this.opt = Object.assign({}, defaultOpt, opt);
     }
@@ -47,11 +26,15 @@ export default class Uploader {
     }
 
     abortAll() {
-
+        this.aborted = Object.keys(this.progress);
     }
 
     abort(id: string) {
+        this.aborted.push(id);
+    }
 
+    hasAborted(id: string) {
+        return this.aborted.includes(id);
     }
 
     submit(data: SubmitData[] | SubmitData) {
@@ -63,6 +46,7 @@ export default class Uploader {
         this.res = {};
         this.progress = {};
         this.aborted = [];
+        this.uploaded = {};
 
         const items = ([] as SubmitData[]).concat(data).map(item => {
             const total = Math.ceil(item.file.size / this.opt.partSize);
@@ -82,7 +66,7 @@ export default class Uploader {
             const item = items.shift();
             if (!item) {
                 if (this.isFinished()) {
-                    this.opt.onSuccess(this.res);
+                    this.emit('success', this.res);
                 }
 
                 return;
@@ -94,7 +78,7 @@ export default class Uploader {
             const uploadChunk = () => {
                 const chunk = chunks.shift();
 
-                if (!chunk || this.aborted.includes(id)) {
+                if (!chunk || this.hasAborted(id)) {
                     uploadFile();
                     return;
                 }
@@ -118,12 +102,12 @@ export default class Uploader {
                     }
                 }
                 xhr.onload = (ev) => {
-                    const res: Res = JSON.parse(xhr.response);
                     if (xhr.status === 200) {
+                        const res: Res = JSON.parse(xhr.response);
                         if (res.url) {
                             this.progress[id] = 1;
                             this.res[id] = res.url;
-                            this.opt.onProgress(this.progress);
+                            this.emit('progress', this.progress);
                             return uploadFile();
                         }
 
@@ -134,19 +118,22 @@ export default class Uploader {
                         return uploadChunk();
                     }
 
-                    return this.opt.onError(res);
+                    return this.emit('error', xhr.response);
                 };
                 xhr.onabort = () => {
-                    this.aborted.push(id);
                     delete this.progress[id];
                     return uploadFile();
                 }
-                xhr.onerror = () => this.opt.onError(xhr.response);
+                xhr.onerror = () => this.emit('error', xhr.response);
                 xhr.upload.onprogress = e => {
+                    if (this.hasAborted(id)) {
+                        return xhr.abort();
+                    }
+
                     if (e.lengthComputable) {
                         this.progress[id] = +(e.loaded / e.total / t + (cur - 1) / t).toFixed(2);
                         if (cur !== t) {
-                            this.opt.onProgress(this.progress);
+                            this.emit('progress', this.progress);
                         }
                     }
                 };
