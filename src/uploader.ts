@@ -7,7 +7,7 @@ const defaultOpt: OptionsProps = {
     parallel: 1,
 }
 
-export default class Uploader extends EventEmitter {
+export default class Uploader {
     private url: string;
     private progress: ProgressCallback = {}
     private opt: OptionsProps
@@ -15,8 +15,11 @@ export default class Uploader extends EventEmitter {
     private uploaded: Dict<number[]> = {}
     private aborted: string[] = [];
 
+    onprogress = (arg: ProgressCallback) => { }
+    onsuccess = (arg: SuccessCallback) => { }
+    onerror = (arg: ErrorCallback) => { }
+
     constructor(url: string, opt = {}) {
-        super();
         this.url = url;
         this.opt = Object.assign({}, defaultOpt, opt);
     }
@@ -71,7 +74,7 @@ export default class Uploader extends EventEmitter {
             const item = items.shift();
             if (!item) {
                 if (this.isFinished()) {
-                    this.emit('success', this.res);
+                    this.onsuccess(this.res);
                 }
 
                 return;
@@ -112,24 +115,24 @@ export default class Uploader extends EventEmitter {
                         if (res.url) {
                             this.progress[id] = 1;
                             this.res[id] = res.url;
-                            this.emit('progress', this.progress);
+                            this.onprogress(this.progress);
                             return uploadFile();
                         }
 
                         if (res.uploaded) {
-                            this.uploaded[id] = res.uploaded;
+                            // this.uploaded[id] = res.uploaded;
                         }
 
                         return uploadChunk();
                     }
 
-                    return this.emit('error', xhr.response);
+                    return this.onerror(xhr.response);
                 };
                 xhr.onabort = () => {
                     delete this.progress[id];
                     return uploadFile();
                 }
-                xhr.onerror = () => this.emit('error', xhr.response);
+                xhr.onerror = () => this.onerror(xhr.response);
                 xhr.upload.onprogress = e => {
                     if (this.hasAborted(id)) {
                         return xhr.abort();
@@ -138,7 +141,7 @@ export default class Uploader extends EventEmitter {
                     if (e.lengthComputable) {
                         this.progress[id] = +(e.loaded / e.total / t + (cur - 1) / t).toFixed(2);
                         if (cur !== t) {
-                            this.emit('progress', this.progress);
+                            this.onprogress(this.progress);
                         }
                     }
                 };
