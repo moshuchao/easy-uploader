@@ -1,5 +1,5 @@
 import EventEmitter from './event-emitter';
-import { Dict, SubmitData, SuccessCallback, ProgressCallback, ErrorCallback, Res, OptionsProps } from './types';
+import { Dict, SubmitedData, SuccessCallback, ProgressCallback, ErrorCallback, Res, OptionsProps } from './types';
 
 const defaultOpt: OptionsProps = {
     partSize: 100000,
@@ -37,7 +37,8 @@ export default class Uploader extends EventEmitter {
         return this.aborted.includes(id);
     }
 
-    submit(data: SubmitData[] | SubmitData) {
+    submit(data: SubmitedData | SubmitedData[]) {
+        if (!data.length) return;
         if (!this.isFinished()) {
             return console.warn('Must be waiting upload finished!');
         }
@@ -48,15 +49,19 @@ export default class Uploader extends EventEmitter {
         this.aborted = [];
         this.uploaded = {};
 
-        const items = ([] as SubmitData[]).concat(data).map(item => {
-            const total = Math.ceil(item.file.size / this.opt.partSize);
+        if (data[0] instanceof File) {
+            data = [data as SubmitedData];
+        }
+
+        const items = ([] as SubmitedData[]).concat(data).map(item => {
+            const total = Math.ceil(item[0].size / this.opt.partSize);
             const chunks = new Array(total).fill(0).map((_, j) => {
-                return item.file.slice(j * this.opt.partSize, (j + 1) * this.opt.partSize);
+                return item[0].slice(j * this.opt.partSize, (j + 1) * this.opt.partSize);
             });
 
             return {
-                id: item.id,
-                file: item.file,
+                id: item[1],
+                file: item[0],
                 total,
                 chunks,
             }

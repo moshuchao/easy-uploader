@@ -8,10 +8,7 @@ export type OptionsProps = {
     parallel: number;
 }
 
-export type SubmitData = {
-    id: string;
-    file: File
-}
+export type SubmitedData = [File, string]
 
 export type SuccessCallback = Dict<string>
 
