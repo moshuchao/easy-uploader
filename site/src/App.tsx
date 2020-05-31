@@ -33,7 +33,12 @@ export default () => {
 
     const onSubmit = useCallback((e: FormEvent) => {
         e.preventDefault();
-        uploader.submit({ id: 'foo', file: files[0] });
+        console.log(files);
+        Promise
+            .all(files.map(file => file.slice(Math.floor(file.size / 10), 100000).arrayBuffer()))
+            .then(res => {
+                uploader.submit(res.map((buff, i) => ({ id: md5(buff) + files[i].size, file: files[i] })));
+            })
     }, [files]);
 
 
