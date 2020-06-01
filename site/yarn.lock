@@ -813,6 +813,11 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
+"@types/node@^14.0.6":
+  version "14.0.6"
+  resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-14.0.6.tgz#f9e178b2da31a4b0ec60b64649e244c31ce18daf"
+  integrity sha1-+eF4stoxpLDsYLZGSeJEwxzhja8=
+
 "@types/prop-types@*":
   version "15.7.3"
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.3.tgz#2ab0d5da2e5815f94b0b9d4b95d1e5f243ab2ca7"
