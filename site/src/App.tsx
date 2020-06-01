@@ -1,21 +1,23 @@
 import React, { useState, useCallback, ChangeEvent, useRef, FormEvent, useEffect } from 'react';
+import './style.less';
 import Uploader from '../../src/uploader';
 
 const uploader = new Uploader(process.env.REMOTE_HOST + '/api/upload-files', {
     partSize: +process.env.PARTSIZE
 });
 
-const FileItem = (props: { file: File, progress: number, url: string }) => (
-    <li>
-        <div>
-            <span>{props.file.name}</span>
+const FileItem = (props: { index: number, file: File, progress: number, url: string }) => (
+    <li className="file-item">
+        <div className="file-item-body">
+            <em>{props.index + 1}.</em>
+            <span className="file-name">{props.file.name}</span>
             {props.url
-                ? <a href={process.env.REMOTE_HOST + props.url} target="_blank" rel="noopener noreferrer">download</a>
+                ? <a className="btn btn-link" href={process.env.REMOTE_HOST + props.url} target="_blank" rel="noopener noreferrer">download</a>
                 :
-                <button>cancel</button>
+                <button className="btn btn-warning">cancel</button>
             }
         </div>
-        <div>{props.progress}</div>
+        <div className="progress" style={{ width: (props.progress * 100).toFixed(2) + '%' }}></div>
     </li>
 );
 
@@ -50,12 +52,15 @@ export default () => {
 
     return (
         <div>
-            <form onSubmit={onSubmit}>
-                <input type="file" multiple onChange={onChange} />
-                <ol>
-                    {uploadedData.map(item => <FileItem file={item[0]} key={item[1]} progress={progress[item[1]]} url={fileUrlMap[item[1]]} />)}
+            <form onSubmit={onSubmit} className="form-container">
+                <label className="uploader">
+                    <input type="file" multiple onChange={onChange} />
+                    <span className="uploader-text">Chooses your files</span>
+                </label>
+                <ol className="uploader-list">
+                    {uploadedData.map((item, i) => <FileItem index={i} file={item[0]} key={item[1]} progress={progress[item[1]]} url={fileUrlMap[item[1]]} />)}
                 </ol>
-                <button type="submit">submit</button>
+                <button type="submit" className="btn btn-primary">submit</button>
             </form>
         </div>
     )
