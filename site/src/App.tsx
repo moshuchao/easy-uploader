@@ -1,14 +1,16 @@
 import React, { useState, useCallback, ChangeEvent, useRef, FormEvent, useEffect } from 'react';
 import Uploader from '../../src/uploader';
 
-const uploader = new Uploader('http://localhost:3000/api/upload-files');
+const uploader = new Uploader(process.env.REMOTE_HOST + '/api/upload-files', {
+    partSize: +process.env.PARTSIZE
+});
 
 const FileItem = (props: { file: File, progress: number, url: string }) => (
     <li>
         <div>
             <span>{props.file.name}</span>
             {props.url
-                ? <a href={props.url} target="_blank" rel="noopener noreferrer">download</a>
+                ? <a href={process.env.REMOTE_HOST + props.url} target="_blank" rel="noopener noreferrer">download</a>
                 :
                 <button>cancel</button>
             }
