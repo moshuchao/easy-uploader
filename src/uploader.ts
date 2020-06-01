@@ -19,7 +19,7 @@ export default class Uploader {
     onsuccess = (arg: SuccessCallback) => { }
     onerror = (arg: ErrorCallback) => { }
 
-    constructor(url: string, opt = {}) {
+    constructor(url: string, opt?: Partial<OptionsProps>) {
         this.url = url;
         this.opt = Object.assign({}, defaultOpt, opt);
     }
