@@ -66,7 +66,7 @@ export default class Uploader {
                 id: item[1],
                 file: item[0],
                 total,
-                chunks,
+                chunks: [item[0].slice(0, 0)].concat(chunks),
             }
         });
 
@@ -92,6 +92,7 @@ export default class Uploader {
                 }
 
                 const cur = item.total - chunks.length;
+
                 if (this.uploaded[id]?.includes(cur)) {
                     uploadChunk();
                     return;
@@ -120,7 +121,7 @@ export default class Uploader {
                         }
 
                         if (res.uploaded) {
-                            // this.uploaded[id] = res.uploaded;
+                            this.uploaded[id] = res.uploaded;
                         }
 
                         return uploadChunk();
