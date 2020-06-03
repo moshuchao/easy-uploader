@@ -100,7 +100,7 @@ export default class Uploader {
 
                 const t = item.total;
                 const xhr = new XMLHttpRequest();
-                xhr.open('post', this.url);
+                xhr.open('POST', this.url);
                 xhr.setRequestHeader('x-md5', id);
                 xhr.setRequestHeader('x-filename', encodeURIComponent(item.file.name));
                 xhr.setRequestHeader('x-current', cur + '');
