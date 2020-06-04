@@ -1968,6 +1968,11 @@ duplexer2@~0.1.4:
   dependencies:
     readable-stream "^2.0.2"
 
+easy-uploader.js@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npm.taobao.org/easy-uploader.js/download/easy-uploader.js-2.0.0.tgz?cache=0&sync_timestamp=1591255374891&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Feasy-uploader.js%2Fdownload%2Feasy-uploader.js-2.0.0.tgz#1196d59507f247ad36b7951e5bf36fcd237bbd9c"
+  integrity sha1-EZbVlQfyR602t5UeW/NvzSN7vZw=
+
 ecc-jsbn@~0.1.1:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.2.tgz#3a83a904e54353287874c564b7549386849a98c9"
@@ -4687,6 +4692,11 @@ source-map@^0.5.0, source-map@^0.5.6:
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
   integrity sha1-igOdLRAh0i0eoUyA2OpGi6LvP8w=
+
+spark-md5@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.npm.taobao.org/spark-md5/download/spark-md5-3.0.1.tgz#83a0e255734f2ab4e5c466e5a2cfc9ba2aa2124d"
+  integrity sha1-g6DiVXNPKrTlxGblos/JuiqiEk0=
 
 split-string@^3.0.1, split-string@^3.0.2:
   version "3.1.0"

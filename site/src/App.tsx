@@ -1,6 +1,6 @@
 import React, { useState, useCallback, ChangeEvent, useRef, FormEvent, useEffect } from 'react';
+import Uploader from 'easy-uploader.js';
 import './style.less';
-import Uploader from '../../src/uploader';
 
 const uploader = new Uploader(process.env.REMOTE_HOST + '/api/upload-files', {
     partSize: +process.env.PARTSIZE
