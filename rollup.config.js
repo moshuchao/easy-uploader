@@ -1,31 +1,41 @@
 // rollup.config.js
-import typescript from '@rollup/plugin-typescript';
-import { uglify } from "rollup-plugin-uglify";
-import { version } from './package.json';
+import pkg from './package.json';
+import ts from 'rollup-plugin-typescript2'
+import { terser } from "rollup-plugin-terser";
 
-const banner = '/*! uploader.js version ' + version + ' */';
+const banner = `
+/**
+ * ${pkg.name} v${pkg.version}
+ * @author ${pkg.author}
+ * @license ${pkg.license}
+ */
+`;
 
 export default {
     input: 'src/uploader.ts',
     output: [{
-        file: 'dist/uploader.umd.js',
+        file: pkg.main,
         format: 'umd',
         name: 'Uploader',
         banner,
+        globals: {
+            'spark-md5': 'SparkMD5'
+        }
     }, {
-        file: 'dist/uploader.cjs.js',
-        format: 'cjs',
+        file: pkg.module,
+        format: 'es',
         banner,
     }],
-    plugins: [typescript(), uglify({
+    plugins: [ts(), terser({
         output: {
             comments: function (node, comment) {
                 if (comment.type === 'comment2') {
-                    // multiline comment
-                    return /@preserve|@license|@cc_on|^!/i.test(comment.value);
+                    // multiline commenta
+                    return /@preserve|@license/i.test(comment.value);
                 }
                 return false;
             }
         }
     })],
+    external: ['spark-md5']
 };
