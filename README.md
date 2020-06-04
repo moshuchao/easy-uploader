@@ -1,59 +1,39 @@
-# Easy-uploader
-A modern file uploader
+# 功能
+针对大文件，配合使用md5，可分片上传、断点上传。[预览](https://easy-uploader.now.sh/)
 
-## Features
-- Lightweight(no dependencies)
-- Supports breakpoint
-- Supports fragment
-- Parallel transmission
-- Real-time progress
-- Cancelable
-
-## Example
-https://codesandbox.io/s/distracted-montalcini-7cyzi
-
-## Installation
+# Install
 ``` bash
-npm install easy-uploader.js --save
+yarn add easy-uploader.js
 ```
-## Usage
-1. import Uploader
+
+# 快速使用
 ``` js
+// 1.导入
 import Uploader from 'easy-uploader.js'
+
+// 2.创建实例
+const uploader = new Uploader('/api/upload-files',options);
+
+// 3.创建md5
+const md5Map = uploader.makeMd5(FileList);
+
+// 4.上传文件
+uploader.submit();
 ```
-2. create a instance
-``` js
-const instance = new Uploader('/upload')
-```
-3. select file and upload
-``` js
-instance.submit([{id, input:'your file'}])
-```
-## Docs
-``` js
-const instance = new Uploader(url, options)
-```
-options:
-- partSize: number, default: 131072(byte)
-- parallel: number, default: 1
-- onError: function(err){}
-- onProgress: function(percent){}
-- onSuccess: function(response){}
+
+# 说明
+## 1.构造函数Uploader options:
+- partSize: 分片大小，number, default: 1MB
+- parallel: 并行下载任务（仅当上传多个文件时候），number, default: 1
 - headers: {}
 
-instance methods
-- submit([{id,input}]): id: string; input: File;
-- abort(id): id: string, above id;
-- abortAll()
+## 2.实例方法
+- `makeMd5(FileList)`：根据FileList生成对应的md5
+- `submit()`：提交/上传
+- `abort(md5)`：取消上传
+- `abortAll()`：取消全部
 
-request headers:
-- X-Chunk-Num
-- X-Chunk-Total
-- X-File-Id
-- X-File-Name
-- custom header
-
-## Important
-1. Easy-uploader uses native js, include `Promise`, `Array.every`. if supports lower browsers, remember to use polyfills. 
-2. To use breakpoint, may be using md5.js(third-party lib). Such as `js-md5`(in my example).
-3. Id is important. It will be randomstring, filename, or created-string by md5.js. Keep it only one.
+## 3.实例属性
+- `onprogress`：Function，返回进度数据
+- `onsuccess`：Function，全部上传完成后返回结果
+- `onerror`：Function，上传途中出错返回错误信息
