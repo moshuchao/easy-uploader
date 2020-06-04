@@ -43,10 +43,12 @@ export default class Uploader {
 
     abortAll() {
         this.aborted = Object.keys(this.progress);
+        this.data = [];
     }
 
     abort(md5: string) {
         this.aborted.push(md5);
+        this.data = this.data.filter(item => item[1] !== md5);
     }
 
     hasAborted(md5: string) {
