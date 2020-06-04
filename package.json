@@ -1,6 +1,6 @@
 {
   "name": "easy-uploader.js",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "main": "dist/uploader.umd.js",
   "module": "dist/uploader.es.js",
   "types": "dist/uploader.d.ts",
