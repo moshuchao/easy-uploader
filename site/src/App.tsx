@@ -29,19 +29,14 @@ export default () => {
     const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         if (e.target && e.target.files?.length) {
             const files = e.target.files;
-
-            Promise
-                .all(Array.from(files).map(file => file.slice(Math.floor(file.size / 10), 100000).arrayBuffer()))
-                .then(res => {
-                    setUploadedData(res.map((buff, i) => ([files[i], md5(buff) + files[i].size])));
-                })
+            uploader.makeMd5(files).then(setUploadedData)
         }
     }, []);
 
     const onSubmit = useCallback((e: FormEvent) => {
         e.preventDefault();
         console.log(uploadedData);
-        uploader.submit(uploadedData);
+        uploader.submit();
     }, [uploadedData]);
 
     useEffect(() => {
