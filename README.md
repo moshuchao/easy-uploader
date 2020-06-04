@@ -3,7 +3,7 @@
 
 # Install
 ``` bash
-yarn add easy-uploader.js
+yarn add easy-uploader.js spark-md5
 ```
 
 # 快速使用
